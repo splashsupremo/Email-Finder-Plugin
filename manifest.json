@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "author": "Fash Global Tech",
+  "name": "Email Finder",
+  "version": "1.1.1",
+  "description": "Find contact emails published on any website - one page or thousands via CSV. Automatically builds a persistent collection across pages with CSV export.",
+  "permissions": ["sidePanel", "storage", "activeTab", "scripting", "downloads"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "action": { "default_title": "Email Finder" },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

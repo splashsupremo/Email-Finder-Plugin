@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --orange: #f97316; --orange-dark: #ea580c; --bg: #fff7ed; --text: #1c1917; --muted: #78716c; --border: #e7e5e4; }
+  * { box-sizing: border-box; margin: 0; }
+  body { font: 13px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--text); background: #fff; width: 360px; min-height: 100vh; }
+  header { background: linear-gradient(135deg, var(--orange), var(--orange-dark)); color: #fff; padding: 12px 14px; }
+  header h1 { font-size: 15px; }
+  header p { font-size: 11px; opacity: .85; }
+  .tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .tabs button { flex: 1; padding: 9px; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; color: var(--muted); }
+  .tabs button.active { color: var(--orange-dark); border-bottom-color: var(--orange); }
+  .pane { padding: 12px; display: none; }
+  .pane.active { display: block; }
+  button.primary { width: 100%; padding: 9px; border: none; border-radius: 8px; background: var(--orange); color: #fff; font-weight: 600; cursor: pointer; margin-bottom: 8px; }
+  button.primary:hover { background: var(--orange-dark); }
+  button.ghost { padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: #fff; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  .options { background: var(--bg); border: 1px solid #fed7aa; border-radius: 8px; padding: 10px; margin: 10px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .options label { font-size: 11px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+  .options input, .options select { padding: 5px; border: 1px solid var(--border); border-radius: 6px; width: 100%; }
+  .options .check { flex-direction: row; align-items: center; gap: 6px; }
+  .stats { display: flex; gap: 6px; margin: 10px 0; }
+  .stat { flex: 1; background: var(--bg); border-radius: 8px; padding: 8px; text-align: center; }
+  .stat b { display: block; font-size: 16px; color: var(--orange-dark); }
+  .stat span { font-size: 10px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  th, td { padding: 5px 6px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; word-break: break-all; }
+  th { color: var(--muted); font-size: 10px; text-transform: uppercase; }
+  .email { color: var(--orange-dark); font-weight: 600; }
+  .copy { border: none; background: none; cursor: pointer; color: var(--orange); font-size: 11px; padding: 0 4px; }
+  .status-done { color: #16a34a; } .status-error { color: #dc2626; } .status-scanning { color: var(--orange-dark); }
+  .muted { color: var(--muted); font-size: 11px; }
+  .btnrow { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  #progressBar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  #progressBar > div { height: 100%; background: var(--orange); width: 0%; transition: width .3s; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📧 Email Finder</h1>
+  <p>Fash Global Tech</p>
+</header>
+
+<div class="tabs">
+  <button id="tabCollect" class="active">📥 Collection</button>
+  <button id="tabPage">This page</button>
+  <button id="tabBulk">Bulk CSV</button>
+</div>
+
+<!-- ============ COLLECTION (auto-scanned, persistent) ============ -->
+<div id="paneCollect" class="pane active">
+  <div id="collectStatus" class="muted" style="margin-bottom:8px">Idle — browsing pages are scanned automatically.</div>
+
+  <div class="stats">
+    <div class="stat"><b id="collCount">0</b><span>unique emails collected</span></div>
+    <div class="stat"><b id="collPages">0</b><span>source pages</span></div>
+  </div>
+
+  <div class="btnrow">
+    <button class="ghost" id="btnExportColl">⬇ Export CSV</button>
+    <button class="ghost" id="btnCopyColl">📋 Copy all</button>
+    <button class="ghost" id="btnClearColl">🗑 Clear collection</button>
+  </div>
+
+  <table id="collTable" style="display:none">
+    <thead><tr><th>Email</th><th></th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <p id="collEmpty" class="muted" style="margin-top:8px">No emails collected yet — just browse and pages will be scanned automatically.</p>
+</div>
+
+
+<!-- ============ THIS PAGE ============ -->
+<div id="panePage" class="pane">
+  <button class="primary" id="btnScanPage">Scan this page</button>
+  <button class="ghost" id="btnScanAll" style="width:100%">🔍 Discover &amp; scan contact pages</button>
+
+  <div id="pageFilters" style="display:none; margin-top:10px">
+    <input type="text" id="fltText" placeholder="Filter emails…" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px">
+    <label style="display:flex;gap:6px;font-size:11px;color:var(--muted);margin-bottom:4px">
+      <input type="checkbox" id="fltRole"> hide role mailboxes (info@, support@…)
+    </label>
+    <label style="display:flex;gap:6px;font-size:11px;color:var(--muted);margin-bottom:4px">
+      <input type="checkbox" id="fltOwn"> only emails matching this site's domain
+    </label>
+    <input type="text" id="fltBlock" placeholder="Block source domains: google.com, facebook.com" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:6px">
+  </div>
+
+  <div id="pageStatus" class="muted" style="margin-top:8px"></div>
+  <table id="pageTable" style="display:none">
+    <thead><tr><th>Email</th><th>Found on</th><th></th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- ============ BULK CSV ============ -->
+<div id="paneBulk" class="pane">
+  <input type="file" id="fileInput" accept=".csv,text/csv">
+  <div id="bulkIdle">
+    <p class="muted" style="margin-top:8px">CSV must have a column like <b>website</b>, <b>url</b> or <b>domain</b>.
+    <a href="#" id="lnkSample">Download sample CSV</a></p>
+  </div>
+
+  <div id="bulkReady" style="display:none">
+    <div class="options">
+      <label>Pages per site <input type="number" id="optPages" value="3" min="1" max="10"></label>
+      <label>Sites at once <input type="number" id="optConc" value="3" min="1" max="10"></label>
+      <label>Page timeout (s) <input type="number" id="optTimeout" value="10" min="2" max="60"></label>
+      <label>Delay (ms) <input type="number" id="optDelay" value="500" min="0" max="10000" step="100"></label>
+      <label class="check"><input type="checkbox" id="optSkipRole" checked> Skip info@/support@ mailboxes</label>
+      <label class="check"><input type="checkbox" id="optDedupe" checked> Skip duplicate domains</label>
+      <label class="check"><input type="checkbox" id="optOwnDomain"> Keep only emails matching each site's domain</label>
+    </div>
+    <button class="primary" id="btnStart">▶ Start scan</button>
+    <button class="ghost" id="btnPause" style="display:none; width:100%">⏸ Pause</button>
+
+    <div class="stats">
+      <div class="stat"><b id="stProcessed">0</b><span>processed</span></div>
+      <div class="stat"><b id="stRemaining">0</b><span>remaining</span></div>
+      <div class="stat"><b id="stFound">0</b><span>emails found</span></div>
+      <div class="stat"><b id="stTime">0:00</b><span>elapsed</span></div>
+    </div>
+    <div id="progressBar"><div></div></div>
+
+    <div class="btnrow">
+      <button class="ghost" id="btnExport">⬇ Export CSV</button>
+      <button class="ghost" id="btnCopy">📋 Copy all</button>
+      <label class="check" style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)"><input type="checkbox" id="optExportOnly"> only rows with emails</label>
+      <button class="ghost" id="btnClear">🗑 Clear all</button>
+    </div>
+
+    <table id="bulkTable">
+      <thead><tr><th>#</th><th>Website</th><th>Emails</th><th>Notes</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="sidepanel.js"></script>
+</body>
+</html>
